@@ -7,7 +7,7 @@
 
 **A modernized REST API for light, wuxia, and web novels, rebuilt with Fastify and Puppeteer to deliver greater efficiency, scalability, and reliability. Designed primarily for educational and research purposes, this project demonstrates advanced techniques in web scraping, API architecture, and distributed data caching.**
 
-## What's New in the Enhanced Edition
+## What's New
 
 - **Modernized Tech Stack**: Migrated from Express to Fastify, enabling faster request handling and lower overhead for high-performance APIs.
 - **Intelligent Scraping with Puppeteer**: Integrated Puppeteer for robust, dynamic content extraction with support for concurrent scraping.

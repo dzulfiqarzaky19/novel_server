@@ -1,3 +1,4 @@
+// tsconfig.json
 {
   "compilerOptions": {
     "rootDir": "./src",
@@ -22,16 +23,17 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-
     "isolatedModules": true,
 
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".", // required for paths to work
+    "baseUrl": ".",
     "paths": {
       "#types/*": ["src/types/*"],
       "#routes/*": ["src/routes/*"],
       "#scrapper/*": ["src/scrapper/*"],
-      "#utils/*": ["src/utils/*"]
+      "#utils/*": ["src/utils/*"],
+      "#controller/*": ["src/controller/*"],
+      "#model/*": ["src/model/*"],
+      "#config/*": ["src/config/*"]
     }
   },
   "include": ["src/**/*", "src/types/**/*.d.ts"],

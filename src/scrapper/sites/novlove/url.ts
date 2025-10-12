@@ -22,10 +22,10 @@ export const toPath = (href: string) => {
  *
  * If the path does not start with "/novel/", it returns an empty string.
  */
-export const slugFromNovelPath = (path: string) => {
+export const slugFromPath = (path: string) => {
   const parts = path.split('/').filter(Boolean);
 
-  return parts[0] === 'novel' ? (parts[1] ?? '') : '';
+  return parts[1] ?? '';
 };
 
 /**

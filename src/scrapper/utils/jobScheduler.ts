@@ -44,3 +44,11 @@ export const createJobScheduler = (
 
   return { addJob };
 };
+
+const DEFAULT_MAX_JOBS = 1;
+const DEFAULT_DELAY_MS = 2000;
+
+export const defaultScheduler = createJobScheduler(
+  DEFAULT_MAX_JOBS,
+  DEFAULT_DELAY_MS,
+);

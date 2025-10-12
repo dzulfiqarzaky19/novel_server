@@ -1,7 +1,7 @@
 import {
   toAbsolute,
   toPath,
-  slugFromNovelPath,
+  slugFromPath,
   chapterSlugFromPath,
 } from '../url.js';
 
@@ -14,7 +14,7 @@ import type {
   NormalizedCompletedNovel,
   list,
   NormalizedList,
-} from './models.js';
+} from './homeScrapper.models.js';
 
 export const normalizeHot = (hotNovels: HotNovel[]): NormalizedHotNovel[] =>
   hotNovels.map((hot) => {
@@ -25,7 +25,7 @@ export const normalizeHot = (hotNovels: HotNovel[]): NormalizedHotNovel[] =>
       hasLabel: hot.hasLabel,
       absoluteUrl: toAbsolute(hot.url),
       path,
-      slug: slugFromNovelPath(path),
+      slug: slugFromPath(path),
       coverAbsoluteUrl: toAbsolute(hot.cover),
     };
   });
@@ -41,7 +41,7 @@ export const normalizeLatest = (
       title: latest.title,
       absoluteUrl: toAbsolute(latest.url),
       path: novelPath,
-      slug: slugFromNovelPath(novelPath),
+      slug: slugFromPath(novelPath),
       isNew: latest.isNew,
       genres: latest.genres,
       latestChapter: {
@@ -64,7 +64,7 @@ export const normalizeCompleted = (
       title: completed.title,
       absoluteUrl: toAbsolute(completed.url),
       path,
-      slug: slugFromNovelPath(path),
+      slug: slugFromPath(path),
       coverAbsoluteUrl: toAbsolute(completed.cover),
       chapterInfo: completed.chapterInfo,
     };

@@ -1,11 +1,18 @@
 import type { EvaluateFuncWith, Page } from 'puppeteer';
 
-export async function evalOrEmpty<Output, Config>(
-  page: Page,
-  selector: string,
-  parser: (elements: Element[], config: Config) => Output,
-  config: Config,
-): Promise<Output> {
+interface IEvalOrEmptyProps<Output, Config> {
+  page: Page;
+  selector: string;
+  parser: (elements: Element[], config: Config) => Output;
+  config: Config;
+}
+
+export async function evalOrEmpty<Output, Config>({
+  page,
+  selector,
+  parser,
+  config,
+}: IEvalOrEmptyProps<Output, Config>): Promise<Output> {
   const exists = await page.$(selector);
 
   if (!exists) {

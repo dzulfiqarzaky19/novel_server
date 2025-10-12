@@ -1,11 +1,15 @@
-// src/index.ts
 import Fastify from 'fastify';
 import puppeteerPlugin from './plugins/puppeteer/puppeteer.js';
 import redisPlugin from './plugins/redis.js';
-import novelRoutes from './routes/novlove.js';
+import corsPlugin from './plugins/cors.js';
+import novelRoutes from './routes/novlove.router.js';
+
+const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST || '127.0.0.1';
 
 async function main() {
   const app = Fastify({ logger: true });
+  app.register(corsPlugin);
   app.register(puppeteerPlugin);
   app.register(redisPlugin);
 
@@ -14,10 +18,14 @@ async function main() {
   app.get('/', async (_req, reply) => reply.send({ hello: 'world' }));
 
   await app.ready();
+
   app.log.info(`puppeteer decorated? ${Boolean((app as any).puppeteer)}`);
   app.log.info(`redis decorated? ${Boolean((app as any).redis)}`);
 
-  const address = await app.listen({ port: 3000, host: '127.0.0.1' });
+  const address = await app.listen({
+    port: PORT,
+    host: HOST,
+  });
   console.log(`🚀 Server running on ${address}`);
 }
 

@@ -1,16 +1,25 @@
 import { FastifyInstance } from 'fastify';
 
-export const redisCache = async <T>(
+interface IRedisCacheProps<Output> {
+  key: string;
+  ttl: number;
+  fetcher: () => Promise<Output>;
+  isSkipCache?: boolean;
+}
+
+export const redisCache = async <Output>(
   fastify: FastifyInstance,
-  key: string,
-  ttl: number,
-  fetcher: () => Promise<T>,
-): Promise<T> => {
+  config: IRedisCacheProps<Output>,
+): Promise<Output> => {
+  const { key, ttl, fetcher, isSkipCache = false } = config;
+
+  if (isSkipCache) return fetcher();
+
   try {
     const cached = await fastify.redis.get(key);
 
     if (cached) {
-      return JSON.parse(cached) as T;
+      return JSON.parse(cached);
     }
   } catch (err) {
     fastify.log.warn({ err }, 'redis get failed, falling back to scrape');
