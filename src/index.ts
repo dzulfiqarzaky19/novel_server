@@ -1,4 +1,3 @@
-// src/index.ts
 import Fastify from 'fastify';
 import puppeteerPlugin from './plugins/puppeteer/puppeteer.js';
 import redisPlugin from './plugins/redis.js';

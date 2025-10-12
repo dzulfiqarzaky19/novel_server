@@ -1,12 +1,12 @@
 import { FastifyInstance } from 'fastify';
 
-import { NovloveController } from 'src/controller/novlove.controller.js';
-import { NovloveRedisDebugController } from 'src/controller/novlove.debug.controller.js';
+import { NovloveController } from '#controller/novlove.controller.js';
+import { NovloveRedisDebugController } from '#controller/novlove.debug.controller.js';
 import {
   ChapterRequest,
   ListsRequest,
   NovelRequest,
-} from 'src/model/novlove.model.js';
+} from '#model/novlove.model.js';
 
 export default async function novloveRoute(fastify: FastifyInstance) {
   const novlove = NovloveController(fastify);

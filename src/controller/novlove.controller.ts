@@ -8,8 +8,8 @@ import {
   ChapterRequest,
   ListsRequest,
   NovelRequest,
-} from 'src/model/novlove.model.js';
-import { NOVLOVE_CONFIG } from 'src/config/novlove.config.js';
+} from '#model/novlove.model.js';
+import { NOVLOVE_CONFIG } from '#config/novlove.config.js';
 import { detailScrapper } from '#scrapper/sites/novlove/detail/detailScrapper.js';
 import { chapterScrapper } from '#scrapper/sites/novlove/chapter/chapterScrapper.js';
 

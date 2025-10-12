@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { NOVLOVE_CONFIG } from 'src/config/novlove.config.js';
+import { NOVLOVE_CONFIG } from '#config/novlove.config.js';
 
 export const NovloveRedisDebugController = (fastify: FastifyInstance) => {
   const getCache = async (key: string) => {

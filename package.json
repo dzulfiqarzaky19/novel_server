@@ -4,21 +4,16 @@
   "description": "A web novel scraper using Fastify + Puppeteer + TypeScript",
   "main": "dist/index.js",
   "type": "module",
-  "exports": {
-    "./@types/*": "./src/types/*",
-    "./@routes/*": "./src/routes/*",
-    "./@scrapper/*": "./src/scrapper/*",
-    "./@utils/*": "./src/utils/*"
-  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "start": "node dist/index.js",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
     "@fastify/redis": "^7.1.0",
+    "dotenv": "^17.2.3",
     "fastify": "^5.6.1",
     "puppeteer": "^24.23.0"
   },
@@ -32,6 +27,7 @@
     "nodemon": "^3.1.7",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3"
   }
