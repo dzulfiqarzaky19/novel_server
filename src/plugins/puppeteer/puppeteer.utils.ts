@@ -1,4 +1,5 @@
 import puppeteer, { Browser } from 'puppeteer';
+import fs from 'node:fs';
 
 type BrowserState = {
   activeBrowserInstance: Browser | null;
@@ -10,6 +11,30 @@ const browserState: BrowserState = {
   launchInProgress: null,
 };
 
+function resolveExecutablePath(): string | undefined {
+  const candidates = [
+    process.env.PUPPETEER_EXECUTABLE_PATH,
+    // Linux:
+    '/usr/bin/google-chrome',
+    '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    // macOS:
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    // Windows:
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  ].filter(Boolean) as string[];
+
+  for (const p of candidates) {
+    try {
+      if (p && fs.existsSync(p)) return p;
+    } catch {}
+  }
+
+  return undefined;
+}
+
 export const getSharedBrowserInstance = async (): Promise<Browser> => {
   if (browserState.activeBrowserInstance) {
     return browserState.activeBrowserInstance;
@@ -19,10 +44,13 @@ export const getSharedBrowserInstance = async (): Promise<Browser> => {
     return browserState.launchInProgress;
   }
 
+  const executablePath = resolveExecutablePath();
+
   const launching = puppeteer
     .launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      ...(executablePath ? { executablePath } : {}),
     })
     .then((launchedBrowser) => {
       browserState.activeBrowserInstance = launchedBrowser;

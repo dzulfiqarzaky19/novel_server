@@ -7,8 +7,11 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc && tsc-alias",
+    "bundle": "esbuild dist/index.js --bundle --platform=node --format=esm --target=node20 --outfile=bundle/index.mjs --minify --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"",
+    "prodbuild": "npm run build && npm run bundle",
     "start": "node dist/index.js",
-    "clean": "rm -rf dist"
+    "start:bundle": "node bundle/index.mjs",
+    "clean": "rm -rf dist bundle"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
@@ -21,6 +24,7 @@
     "@types/node": "^24.6.2",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
+    "esbuild": "^0.25.10",
     "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
