@@ -1,5 +1,8 @@
 import puppeteer, { Browser } from 'puppeteer';
 import fs from 'node:fs';
+import { addExtra } from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+
 import {
   PUPPETEER_EXECUTABLE_PATH,
   PUPPETEER_LAUNCH_ARGS,
@@ -17,28 +20,32 @@ const browserState: BrowserState = {
 
 function resolveExecutablePath(): string | undefined {
   const candidates = PUPPETEER_EXECUTABLE_PATH.filter(Boolean) as string[];
-
   for (const p of candidates) {
     try {
       if (p && fs.existsSync(p)) return p;
     } catch {}
   }
-
   return undefined;
 }
 
-export const getSharedBrowserInstance = async (): Promise<Browser> => {
-  if (browserState.activeBrowserInstance) {
-    return browserState.activeBrowserInstance;
-  }
+function buildPuppeteer() {
+  const p = addExtra(puppeteer as any);
 
-  if (browserState.launchInProgress) {
-    return browserState.launchInProgress;
+  if (process.env.USE_STEALTH === '1' || process.env.USE_STEALTH === 'true') {
+    p.use(StealthPlugin());
   }
+  return p;
+}
+
+export const getSharedBrowserInstance = async (): Promise<Browser> => {
+  if (browserState.activeBrowserInstance)
+    return browserState.activeBrowserInstance;
+  if (browserState.launchInProgress) return browserState.launchInProgress;
 
   const executablePath = resolveExecutablePath();
+  const pptr = buildPuppeteer();
 
-  const launching = puppeteer
+  const launching = pptr
     .launch({
       headless: true,
       args: PUPPETEER_LAUNCH_ARGS,
@@ -50,7 +57,6 @@ export const getSharedBrowserInstance = async (): Promise<Browser> => {
 
       launchedBrowser.on('disconnected', () => {
         browserState.activeBrowserInstance = null;
-
         browserState.launchInProgress = null;
       });
 
@@ -58,19 +64,16 @@ export const getSharedBrowserInstance = async (): Promise<Browser> => {
     })
     .catch((error) => {
       browserState.launchInProgress = null;
-
       throw error;
     });
 
   browserState.launchInProgress = launching;
-
   return launching;
 };
 
 export const closeSharedBrowserInstance = async (): Promise<void> => {
   if (browserState.activeBrowserInstance) {
     await browserState.activeBrowserInstance.close();
-
     browserState.activeBrowserInstance = null;
   }
 };
