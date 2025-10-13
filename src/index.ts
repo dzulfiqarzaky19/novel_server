@@ -8,7 +8,7 @@ const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || '127.0.0.1';
 
 async function main() {
-  const app = Fastify({ logger: true, pluginTimeout: 60000 });
+  const app = Fastify({ logger: true });
   app.register(corsPlugin);
   app.register(puppeteerPlugin);
   app.register(redisPlugin);
