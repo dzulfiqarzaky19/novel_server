@@ -1,5 +1,8 @@
-import puppeteer, { Browser } from 'puppeteer';
+import type { Browser } from 'puppeteer';
+import puppeteer from 'puppeteer';
+import puppeteerCore from 'puppeteer-core';
 import fs from 'node:fs';
+
 import { addExtra } from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 
@@ -28,13 +31,12 @@ function resolveExecutablePath(): string | undefined {
   return undefined;
 }
 
-function buildPuppeteer() {
-  const p = addExtra(puppeteer as any);
-
+function withStealth<T>(launcher: T): T {
+  const p = addExtra(launcher as any);
   if (process.env.USE_STEALTH === '1' || process.env.USE_STEALTH === 'true') {
     p.use(StealthPlugin());
   }
-  return p;
+  return p as unknown as T;
 }
 
 export const getSharedBrowserInstance = async (): Promise<Browser> => {
@@ -42,30 +44,42 @@ export const getSharedBrowserInstance = async (): Promise<Browser> => {
     return browserState.activeBrowserInstance;
   if (browserState.launchInProgress) return browserState.launchInProgress;
 
-  const executablePath = resolveExecutablePath();
-  const pptr = buildPuppeteer();
+  const wsEndpoint = `${process.env.BROWSERLESS_URL}=${process.env.BROWSERLESS_WS}`;
 
-  const launching = pptr
-    .launch({
-      headless: true,
-      args: PUPPETEER_LAUNCH_ARGS,
-      ...(executablePath ? { executablePath } : {}),
-    })
-    .then((launchedBrowser) => {
-      browserState.activeBrowserInstance = launchedBrowser;
-      browserState.launchInProgress = null;
+  const launching = (async () => {
+    let browser: Browser;
 
-      launchedBrowser.on('disconnected', () => {
-        browserState.activeBrowserInstance = null;
-        browserState.launchInProgress = null;
+    if (wsEndpoint) {
+      const pptrConnect = withStealth(puppeteerCore);
+
+      browser = await pptrConnect.connect({
+        browserWSEndpoint: wsEndpoint,
+        slowMo: 0,
+        protocolTimeout: 45_000,
       });
+    } else {
+      const execPath = resolveExecutablePath();
+      const pptrLaunch = withStealth(puppeteer);
 
-      return launchedBrowser;
-    })
-    .catch((error) => {
+      browser = await pptrLaunch.launch({
+        headless: true,
+        args: PUPPETEER_LAUNCH_ARGS,
+        ...(execPath ? { executablePath: execPath } : {}),
+      });
+    }
+
+    browser.on('disconnected', () => {
+      browserState.activeBrowserInstance = null;
       browserState.launchInProgress = null;
-      throw error;
     });
+
+    browserState.activeBrowserInstance = browser;
+    browserState.launchInProgress = null;
+    return browser;
+  })().catch((err) => {
+    browserState.launchInProgress = null;
+    throw err;
+  });
 
   browserState.launchInProgress = launching;
   return launching;
