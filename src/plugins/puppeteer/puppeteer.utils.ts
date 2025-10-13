@@ -1,5 +1,9 @@
 import puppeteer, { Browser } from 'puppeteer';
 import fs from 'node:fs';
+import {
+  PUPPETEER_EXECUTABLE_PATH,
+  PUPPETEER_LAUNCH_ARGS,
+} from './puppeteer.const.js';
 
 type BrowserState = {
   activeBrowserInstance: Browser | null;
@@ -12,19 +16,7 @@ const browserState: BrowserState = {
 };
 
 function resolveExecutablePath(): string | undefined {
-  const candidates = [
-    process.env.PUPPETEER_EXECUTABLE_PATH,
-    // Linux:
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-    // macOS:
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    // Windows:
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-  ].filter(Boolean) as string[];
+  const candidates = PUPPETEER_EXECUTABLE_PATH.filter(Boolean) as string[];
 
   for (const p of candidates) {
     try {
@@ -49,15 +41,7 @@ export const getSharedBrowserInstance = async (): Promise<Browser> => {
   const launching = puppeteer
     .launch({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        `--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36`,
-      ],
+      args: PUPPETEER_LAUNCH_ARGS,
       ...(executablePath ? { executablePath } : {}),
     })
     .then((launchedBrowser) => {
