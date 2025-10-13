@@ -49,7 +49,7 @@ export const getSharedBrowserInstance = async (): Promise<Browser> => {
   const launching = (async () => {
     let browser: Browser;
 
-    if (process.env.BROWSERLESS_URL && process.env.BROWSERLESS_WS) {
+    if (process.env.BUILD_TYPE === 'production') {
       const pptrConnect = withStealth(puppeteerCore);
 
       browser = await pptrConnect.connect({
