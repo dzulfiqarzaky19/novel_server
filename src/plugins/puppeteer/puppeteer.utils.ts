@@ -33,15 +33,39 @@ function resolveExecutablePath(): string | undefined {
 
 function withStealth<T>(launcher: T): T {
   const p = addExtra(launcher as any);
+
   if (process.env.USE_STEALTH === '1' || process.env.USE_STEALTH === 'true') {
     p.use(StealthPlugin());
   }
+
   return p as unknown as T;
 }
 
+/* === NEW: check if current browser is still connected === */
+function isConnected(b?: Browser | null) {
+  try {
+    // puppeteer exposes isConnected(); cast avoids TS complaining on older types
+    return !!b && (b as any).isConnected?.() !== false;
+  } catch {
+    return false;
+  }
+}
+
 export const getSharedBrowserInstance = async (): Promise<Browser> => {
-  if (browserState.activeBrowserInstance)
+  /* === NEW: only reuse if still connected; otherwise drop it so we recreate cleanly === */
+  if (
+    browserState.activeBrowserInstance &&
+    isConnected(browserState.activeBrowserInstance)
+  ) {
     return browserState.activeBrowserInstance;
+  }
+  if (
+    browserState.activeBrowserInstance &&
+    !isConnected(browserState.activeBrowserInstance)
+  ) {
+    browserState.activeBrowserInstance = null;
+  }
+
   if (browserState.launchInProgress) return browserState.launchInProgress;
 
   const wsEndpoint = `${process.env.BROWSERLESS_URL}=${process.env.BROWSERLESS_WS}`;
@@ -86,8 +110,21 @@ export const getSharedBrowserInstance = async (): Promise<Browser> => {
 };
 
 export const closeSharedBrowserInstance = async (): Promise<void> => {
-  if (browserState.activeBrowserInstance) {
-    await browserState.activeBrowserInstance.close();
+  if (!browserState.activeBrowserInstance) return;
+
+  try {
+    /* === NEW: in production (WS/remote) prefer disconnect() instead of close() === */
+    if (
+      process.env.BUILD_TYPE === 'production' &&
+      typeof (browserState.activeBrowserInstance as any).disconnect ===
+        'function'
+    ) {
+      (browserState.activeBrowserInstance as any).disconnect();
+    } else {
+      await browserState.activeBrowserInstance.close();
+    }
+  } finally {
     browserState.activeBrowserInstance = null;
+    browserState.launchInProgress = null;
   }
 };
