@@ -1,6 +1,6 @@
 export const PUPPETEER_CONFIG = {
   name: 'puppeteer',
-  waitOption: 'domcontentloaded',
+  waitOption: 'networkidle2',
   timeout: { navigation: 30_000, selector: 10_000 },
   viewport: { width: 1280, height: 1024 },
   assets: {
