@@ -6,6 +6,7 @@
 /build
 /out
 /bundle
+/snaps
 
 # Logs
 npm-debug.log*
