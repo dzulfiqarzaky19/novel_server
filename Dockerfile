@@ -32,6 +32,7 @@ RUN apt-get update \
  && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /var/cache/* /var/log/*
 
 # Tell Puppeteer to use system Chromium and never try to download its own
+RUN chromium --version || google-chrome --version || true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_SKIP_DOWNLOAD=1
 ENV NODE_ENV=production
