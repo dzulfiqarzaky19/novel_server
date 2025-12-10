@@ -44,6 +44,7 @@ export const getSharedBrowserInstance = async (): Promise<Browser> => {
   ) {
     return browserState.activeBrowserInstance;
   }
+
   if (
     browserState.activeBrowserInstance &&
     !isConnected(browserState.activeBrowserInstance)
@@ -53,18 +54,16 @@ export const getSharedBrowserInstance = async (): Promise<Browser> => {
 
   if (browserState.launchInProgress) return browserState.launchInProgress;
 
-  const wsEndpoint =
-    process.env.BROWSERLESS_WS ||
-    `${process.env.BROWSERLESS_URL}=${process.env.BROWSERLESS_WS}`;
+  const wsEndpoint = process.env.BROWSERLESS_WS;
 
   const launching = (async () => {
     let browser: Browser;
 
-    if (process.env.BUILD_TYPE === 'production') {
+    if (process.env.BUILD_TYPE === 'production' && wsEndpoint) {
       browser = await puppeteerCore.connect({
         browserWSEndpoint: wsEndpoint,
         slowMo: 0,
-        protocolTimeout: 45_000,
+        protocolTimeout: 60_000,
       });
     } else {
       const execPath = resolveExecutablePath();
@@ -97,7 +96,6 @@ export const closeSharedBrowserInstance = async (): Promise<void> => {
   if (!browserState.activeBrowserInstance) return;
 
   try {
-    // In production (remote WS), prefer disconnect() so upstream stays healthy
     if (
       process.env.BUILD_TYPE === 'production' &&
       typeof (browserState.activeBrowserInstance as any).disconnect ===

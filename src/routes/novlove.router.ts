@@ -8,15 +8,11 @@ import {
   NovelRequest,
 } from '#model/novlove.model.js';
 
-
-
-
 export default async function novloveRoute(fastify: FastifyInstance) {
   const novlove = NovloveController(fastify);
   const debug = NovloveRedisDebugController(fastify);
 
   fastify.get('/novlove', novlove.home);
-
   fastify.get<NovelRequest>('/novlove/novel/:name', novlove.novel);
   fastify.get<ChapterRequest>('/novlove/novel/:name/:chapter', novlove.chapter);
   fastify.get<ListsRequest>('/novlove/:list/:listType', novlove.list);

@@ -16,24 +16,16 @@ COPY . .
 RUN npm run prodbuild
 
 ############################
-# Runtime: Node slim + system Chromium, only the bundle
+# Runtime: Node slim (Chrome runs in separate container)
 ############################
 FROM node:${NODE_VERSION}-slim AS runtime
 WORKDIR /app
 
-# Install Chromium + basic fonts + CA certs
+# Only need CA certs for HTTPS requests
 RUN apt-get update \
-     && apt-get install -y --no-install-recommends \
-     chromium \
-     fonts-noto \
-     fonts-noto-color-emoji \
-     ca-certificates \
-     && rm -rf /var/lib/apt/lists/* \
-     && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /var/cache/* /var/log/*
+     && apt-get install -y --no-install-recommends ca-certificates \
+     && rm -rf /var/lib/apt/lists/*
 
-# Tell Puppeteer to use system Chromium and never try to download its own
-RUN chromium --version || google-chrome --version || true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_SKIP_DOWNLOAD=1
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
