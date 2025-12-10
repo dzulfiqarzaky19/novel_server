@@ -9,14 +9,17 @@ import { PUPPETEER_CONFIG } from './puppeteer.const.js';
 import { saveDebugArtifacts } from '#utils/debugSnap.js';
 
 export default fp(async (fastify) => {
-  const browser: Browser = await getSharedBrowserInstance();
+  await getSharedBrowserInstance();
 
   fastify.decorate(PUPPETEER_CONFIG.name, {
-    browser,
+    get browser() {
+      return getSharedBrowserInstance();
+    },
 
     async getPage(url: string, selectors?: string[]): Promise<Page> {
       new URL(url);
 
+      const browser = await getSharedBrowserInstance();
       const page = await browser.newPage();
 
       await page.setExtraHTTPHeaders({

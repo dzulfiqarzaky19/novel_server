@@ -13,6 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [1.2.0] - 10.12.2025
+
+### Features
+
+- novel_server: split Chrome into separate browserless container via Docker Compose.
+- novel_server: add Redis as separate container with persistent volume.
+- novel_server: refactor Dockerfile to slim image (no Chromium, only CA certs).
+- novel_server: add `REDIS_TIME_CONFIG` constants for readable TTL values.
+
+### Fixed
+
+- novel_server: fix puppeteer connection reuse issue with browserless (fresh connection per request).
+- novel_server: add `127.0.0.1:5173` to CORS whitelist for local development.
+
 ## [1.1.0] - 06.10.2025
 
 ### Features

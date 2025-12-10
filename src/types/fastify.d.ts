@@ -5,7 +5,7 @@ declare module 'fastify' {
   interface FastifyInstance {
     redis: FastifyRedis;
     puppeteer: {
-      browser: Browser;
+      browser: Promise<Browser>;
       getPage: (url: string, selectors?: string[]) => Promise<Page>;
     };
   }
