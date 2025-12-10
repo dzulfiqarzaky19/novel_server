@@ -1,5 +1,13 @@
-import puppeteer, { Browser } from 'puppeteer';
+// src/plugins/puppeteer/puppeteer.utils.ts
+import type { Browser } from 'puppeteer';
+import puppeteer from 'puppeteer';
+import puppeteerCore from 'puppeteer-core';
 import fs from 'node:fs';
+
+import {
+  PUPPETEER_EXECUTABLE_PATH,
+  PUPPETEER_LAUNCH_ARGS,
+} from './puppeteer.const.js';
 
 type BrowserState = {
   activeBrowserInstance: Browser | null;
@@ -12,73 +20,95 @@ const browserState: BrowserState = {
 };
 
 function resolveExecutablePath(): string | undefined {
-  const candidates = [
-    process.env.PUPPETEER_EXECUTABLE_PATH,
-    // Linux:
-    '/usr/bin/google-chrome',
-    '/usr/bin/google-chrome-stable',
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
-    // macOS:
-    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-    // Windows:
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-  ].filter(Boolean) as string[];
-
+  const candidates = PUPPETEER_EXECUTABLE_PATH.filter(Boolean) as string[];
   for (const p of candidates) {
     try {
       if (p && fs.existsSync(p)) return p;
     } catch {}
   }
-
   return undefined;
 }
 
+function isConnected(b?: Browser | null) {
+  try {
+    return !!b && (b as any).isConnected?.() !== false;
+  } catch {
+    return false;
+  }
+}
+
 export const getSharedBrowserInstance = async (): Promise<Browser> => {
-  if (browserState.activeBrowserInstance) {
+  if (
+    browserState.activeBrowserInstance &&
+    isConnected(browserState.activeBrowserInstance)
+  ) {
     return browserState.activeBrowserInstance;
   }
-
-  if (browserState.launchInProgress) {
-    return browserState.launchInProgress;
+  if (
+    browserState.activeBrowserInstance &&
+    !isConnected(browserState.activeBrowserInstance)
+  ) {
+    browserState.activeBrowserInstance = null;
   }
 
-  const executablePath = resolveExecutablePath();
+  if (browserState.launchInProgress) return browserState.launchInProgress;
 
-  const launching = puppeteer
-    .launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      ...(executablePath ? { executablePath } : {}),
-    })
-    .then((launchedBrowser) => {
-      browserState.activeBrowserInstance = launchedBrowser;
-      browserState.launchInProgress = null;
+  const wsEndpoint =
+    process.env.BROWSERLESS_WS ||
+    `${process.env.BROWSERLESS_URL}=${process.env.BROWSERLESS_WS}`;
 
-      launchedBrowser.on('disconnected', () => {
-        browserState.activeBrowserInstance = null;
+  const launching = (async () => {
+    let browser: Browser;
 
-        browserState.launchInProgress = null;
+    if (process.env.BUILD_TYPE === 'production') {
+      browser = await puppeteerCore.connect({
+        browserWSEndpoint: wsEndpoint,
+        slowMo: 0,
+        protocolTimeout: 45_000,
       });
+    } else {
+      const execPath = resolveExecutablePath();
 
-      return launchedBrowser;
-    })
-    .catch((error) => {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: PUPPETEER_LAUNCH_ARGS,
+        ...(execPath ? { executablePath: execPath } : {}),
+      });
+    }
+
+    browser.on('disconnected', () => {
+      browserState.activeBrowserInstance = null;
       browserState.launchInProgress = null;
-
-      throw error;
     });
 
-  browserState.launchInProgress = launching;
+    browserState.activeBrowserInstance = browser;
+    browserState.launchInProgress = null;
+    return browser;
+  })().catch((err) => {
+    browserState.launchInProgress = null;
+    throw err;
+  });
 
+  browserState.launchInProgress = launching;
   return launching;
 };
 
 export const closeSharedBrowserInstance = async (): Promise<void> => {
-  if (browserState.activeBrowserInstance) {
-    await browserState.activeBrowserInstance.close();
+  if (!browserState.activeBrowserInstance) return;
 
+  try {
+    // In production (remote WS), prefer disconnect() so upstream stays healthy
+    if (
+      process.env.BUILD_TYPE === 'production' &&
+      typeof (browserState.activeBrowserInstance as any).disconnect ===
+        'function'
+    ) {
+      (browserState.activeBrowserInstance as any).disconnect();
+    } else {
+      await browserState.activeBrowserInstance.close();
+    }
+  } finally {
     browserState.activeBrowserInstance = null;
+    browserState.launchInProgress = null;
   }
 };

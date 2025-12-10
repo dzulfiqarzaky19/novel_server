@@ -8,6 +8,9 @@ import {
   NovelRequest,
 } from '#model/novlove.model.js';
 
+
+
+
 export default async function novloveRoute(fastify: FastifyInstance) {
   const novlove = NovloveController(fastify);
   const debug = NovloveRedisDebugController(fastify);

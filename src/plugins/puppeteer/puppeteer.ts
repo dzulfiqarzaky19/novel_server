@@ -6,6 +6,7 @@ import {
   closeSharedBrowserInstance,
 } from './puppeteer.utils.js';
 import { PUPPETEER_CONFIG } from './puppeteer.const.js';
+import { saveDebugArtifacts } from '#utils/debugSnap.js';
 
 export default fp(async (fastify) => {
   const browser: Browser = await getSharedBrowserInstance();
@@ -18,29 +19,29 @@ export default fp(async (fastify) => {
 
       const page = await browser.newPage();
 
+      await page.setExtraHTTPHeaders({
+        'Accept-Language': 'en-US,en;q=0.9',
+      });
+
       page.setDefaultNavigationTimeout(PUPPETEER_CONFIG.timeout.navigation);
       page.setDefaultTimeout(PUPPETEER_CONFIG.timeout.selector);
 
       if (PUPPETEER_CONFIG.assets.isBlocked) {
         await page.setRequestInterception(true);
-
         const block = (req: any) => {
           if (PUPPETEER_CONFIG.assets.types.includes(req.resourceType())) {
             req.abort();
-
             return;
           }
-
           req.continue();
         };
-
         page.on('request', block);
       }
 
       await page.setViewport(PUPPETEER_CONFIG.viewport);
-      await page.goto(url, { waitUntil: PUPPETEER_CONFIG.waitOption });
 
-      if (selectors && selectors?.length > 0) {
+      const waitSelectors = async () => {
+        if (!selectors?.length) return;
         await Promise.all(
           selectors.map((selector) =>
             page.waitForSelector(selector, {
@@ -48,9 +49,38 @@ export default fp(async (fastify) => {
             }),
           ),
         );
-      }
+      };
 
-      return page;
+      try {
+        await page.goto(url, { waitUntil: PUPPETEER_CONFIG.waitOption });
+        await waitSelectors();
+        return page;
+      } catch (err) {
+        const snap1 = await saveDebugArtifacts(
+          page,
+          'goto-or-selectors-failed',
+          fastify.log.error.bind(fastify.log),
+        );
+
+        fastify.log.error(
+          { err, url, ...snap1 },
+          'Puppeteer failed — captured artifacts, retrying once',
+        );
+
+        try {
+          await page.reload({ waitUntil: PUPPETEER_CONFIG.waitOption });
+          await waitSelectors();
+          return page;
+        } catch (err2) {
+          const snap2 = await saveDebugArtifacts(page, 'retry-failed');
+          fastify.log.error(
+            { err: err2, url, ...snap2 },
+            'Retry failed — giving up',
+            fastify.log.error.bind(fastify.log),
+          );
+          throw err2;
+        }
+      }
     },
   });
 

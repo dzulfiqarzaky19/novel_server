@@ -23,15 +23,16 @@ WORKDIR /app
 
 # Install Chromium + basic fonts + CA certs
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      chromium \
-      fonts-noto \
-      fonts-noto-color-emoji \
-      ca-certificates \
- && rm -rf /var/lib/apt/lists/* \
- && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /var/cache/* /var/log/*
+     && apt-get install -y --no-install-recommends \
+     chromium \
+     fonts-noto \
+     fonts-noto-color-emoji \
+     ca-certificates \
+     && rm -rf /var/lib/apt/lists/* \
+     && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /var/cache/* /var/log/*
 
 # Tell Puppeteer to use system Chromium and never try to download its own
+RUN chromium --version || google-chrome --version || true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_SKIP_DOWNLOAD=1
 ENV NODE_ENV=production
