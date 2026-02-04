@@ -1,28 +1,19 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
-import { homeScrapper } from '#scrapper/sites/novlove/home/homeScrapper.js';
-import { redisCache } from '#utils/redisCache.js';
-import { listScrapper } from '#scrapper/sites/novlove/list/listScrapper.js';
-
+import { NovelService } from '../services/novel.service.js';
 import {
   ChapterRequest,
   ListsRequest,
   NovelRequest,
 } from '#model/novlove.model.js';
-import { NOVLOVE_CONFIG } from '#config/novlove.config.js';
-import { detailScrapper } from '#scrapper/sites/novlove/detail/detailScrapper.js';
-import { chapterScrapper } from '#scrapper/sites/novlove/chapter/chapterScrapper.js';
 
 const defaultQueryPage = '1';
 
 export const NovloveController = (fastify: FastifyInstance) => {
-  const home = async (_: FastifyRequest, res: FastifyReply) => {
-    const data = await redisCache(fastify, {
-      key: NOVLOVE_CONFIG.home.redis_key,
-      ttl: NOVLOVE_CONFIG.home.ttl_seconds,
-      fetcher: () => homeScrapper(fastify),
-    });
+  const service = NovelService(fastify);
 
+  const home = async (_: FastifyRequest, res: FastifyReply) => {
+    const data = await service.getHome();
     return res.send(data);
   };
 
@@ -30,18 +21,7 @@ export const NovloveController = (fastify: FastifyInstance) => {
     const { list, listType } = req.params;
     const page = req.query.page ?? defaultQueryPage;
 
-    const data = await redisCache(fastify, {
-      key: `${NOVLOVE_CONFIG.list.redis_key}:${list}:${listType}`,
-      ttl: NOVLOVE_CONFIG.list.ttl_seconds,
-      fetcher: () =>
-        listScrapper(fastify, {
-          list,
-          listType,
-          query: page,
-        }),
-      isSkipCache: page !== defaultQueryPage,
-    });
-
+    const data = await service.getList(list, listType, page);
     return res.send(data);
   };
 
@@ -50,13 +30,7 @@ export const NovloveController = (fastify: FastifyInstance) => {
     res: FastifyReply,
   ) => {
     const { name } = req.params;
-
-    const data = await redisCache(fastify, {
-      key: `${NOVLOVE_CONFIG.detail.redis_key}:${name}`,
-      ttl: NOVLOVE_CONFIG.detail.ttl_seconds,
-      fetcher: () => detailScrapper(fastify, name),
-    });
-
+    const data = await service.getNovel(name);
     return res.send(data);
   };
 
@@ -67,8 +41,7 @@ export const NovloveController = (fastify: FastifyInstance) => {
     const { name, chapter } = req.params;
     const slug = `${name}/${chapter}`;
 
-    const data = await chapterScrapper(fastify, slug);
-
+    const data = await service.getChapter(slug);
     return res.send(data);
   };
 
