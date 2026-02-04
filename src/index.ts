@@ -1,7 +1,7 @@
 import Fastify from 'fastify';
-import puppeteerPlugin from './plugins/puppeteer/puppeteer.js';
-import redisPlugin from './plugins/redis.js';
-import corsPlugin from './plugins/cors.js';
+import puppeteerPlugin from './services/puppeteer/puppeteer.js';
+import redisPlugin from './config/redis.js';
+import corsPlugin from './config/cors.js';
 import novelRoutes from './routes/novlove.router.js';
 
 const PORT = Number(process.env.PORT || 3000);
