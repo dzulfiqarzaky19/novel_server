@@ -27,12 +27,12 @@
 
     "baseUrl": ".",
     "paths": {
-      "#types/*": ["src/types/*"],
+      "#types/*": ["src/interfaces/*"],
       "#routes/*": ["src/routes/*"],
-      "#scrapper/*": ["src/scrapper/*"],
+      "#scrapper/*": ["src/services/scrapper/*"],
       "#utils/*": ["src/utils/*"],
-      "#controller/*": ["src/controller/*"],
-      "#model/*": ["src/model/*"],
+      "#controller/*": ["src/controllers/*"],
+      "#model/*": ["src/models/*"],
       "#config/*": ["src/config/*"]
     }
   },

@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
 
-import { NovloveController } from '#controller/novlove.controller.js';
-import { NovloveRedisDebugController } from '#controller/novlove.debug.controller.js';
+import { NovloveController } from '#controller/novel.controller.js';
+import { NovloveRedisDebugController } from '#controller/novel-debug.controller.js';
 import {
   ChapterRequest,
   ListsRequest,
